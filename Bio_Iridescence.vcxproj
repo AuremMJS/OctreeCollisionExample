@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{0206727F-6CA3-411C-B37B-E6197A496A62}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>BioRendering</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <ProjectName>Octree_Collision</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Scripts\Include;$(SolutionDir)Dependencies\;D:\softwares\glm-0.9.9.7\glm;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\include;D:\softwares\VulkanSDK\1.1.130.0\Include;D:\works\MSC\HPG\A2\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Dependencies\stb-master\stb-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>D:\softwares\VulkanSDK\1.1.130.0\Lib;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\lib-vc2015;$(SolutionDir)References</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies);opengl32.lib;glu32.lib;MathLibrary.lib;CollisionEngine.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Scripts\Include;$(SolutionDir)Dependencies\MathLibrary;$(SolutionDir)Dependencies\;D:\softwares\glm-0.9.9.7\glm;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\include;D:\softwares\VulkanSDK\1.1.130.0\Include;D:\works\MSC\HPG\A2\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Dependencies\stb-master\stb-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>D:\softwares\VulkanSDK\1.1.130.0\Lib;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\lib-vc2015;$(SolutionDir)References</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies);opengl32.lib;glu32.lib;MathLibrary.lib;CollisionEngine.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Vulkan_DrawingTriangle\Dependencies\eigen-3.3.7\;D:\softwares\glm-0.9.9.7\glm;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\include;D:\softwares\VulkanSDK\1.1.130.0\Include;D:\works\MSC\HPG\A2\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Dependencies\stb-master\stb-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\lib-vc2015;D:\softwares\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies);opengl32.lib;glu32.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Vulkan_DrawingTriangle\Dependencies\eigen-3.3.7\;D:\softwares\glm-0.9.9.7\glm;D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\include;D:\softwares\VulkanSDK\1.1.130.0\Include;D:\works\MSC\HPG\A2\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Vulkan_DrawingTriangle\Dependencies\stb-master\stb-master;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>D:\softwares\glfw-3.3.2.bin.WIN64\glfw-3.3.2.bin.WIN64\lib-vc2015;D:\softwares\VulkanSDK\1.1.130.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies);opengl32.lib;glu32.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="BindingAttributeDescriptionHelper.cpp" />
+    <ClCompile Include="Scripts\Src\Application.cpp" />
+    <ClCompile Include="Scripts\Src\Buffer.cpp" />
+    <ClCompile Include="Scripts\Src\CommandPool.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui_demo.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui_draw.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui_impl_glfw.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="Dependencies\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Scripts\Src\Debug.cpp" />
+    <ClCompile Include="Scripts\Src\Descriptors.cpp" />
+    <ClCompile Include="Scripts\Src\Device.cpp" />
+    <ClCompile Include="Scripts\Src\Image.cpp" />
+    <ClCompile Include="Scripts\Src\ImGuiHelper.cpp" />
+    <ClCompile Include="Scripts\Src\Iridesence.cpp" />
+    <ClCompile Include="Scripts\Src\main.cpp" />
+    <ClCompile Include="Scripts\Src\Mesh.cpp" />
+    <ClCompile Include="Scripts\Src\Pipeline.cpp" />
+    <ClCompile Include="Scripts\Src\Swapchain.cpp" />
+    <ClCompile Include="Scripts\Src\TextureImage.cpp" />
+    <ClCompile Include="Scripts\Src\UI_Design.cpp" />
+    <ClCompile Include="Scripts\Src\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\compile.bat" />
+    <None Include="Shaders\Quad.frag" />
+    <None Include="Shaders\Quad.vert" />
+    <None Include="Shaders\shader.comp" />
+    <None Include="Shaders\shader.frag" />
+    <None Include="Shaders\shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Scripts\Include\Application.h" />
+    <ClInclude Include="Scripts\Include\Buffer.h" />
+    <ClInclude Include="Scripts\Include\CommandPool.h" />
+    <ClInclude Include="Dependencies\ImGUI\imconfig.h" />
+    <ClInclude Include="Dependencies\ImGUI\imgui.h" />
+    <ClInclude Include="Dependencies\ImGUI\imgui_impl_glfw.h" />
+    <ClInclude Include="Dependencies\ImGUI\imgui_impl_vulkan.h" />
+    <ClInclude Include="Dependencies\ImGUI\imgui_internal.h" />
+    <ClInclude Include="Dependencies\ImGUI\imstb_rectpack.h" />
+    <ClInclude Include="Dependencies\ImGUI\imstb_textedit.h" />
+    <ClInclude Include="Dependencies\ImGUI\imstb_truetype.h" />
+    <ClInclude Include="Scripts\Include\Debug.h" />
+    <ClInclude Include="Scripts\Include\Device.h" />
+    <ClInclude Include="Scripts\Include\Constants.h" />
+    <ClInclude Include="Scripts\Include\Image.h" />
+    <ClInclude Include="Scripts\Include\ImGuiHelper.h" />
+    <ClInclude Include="Scripts\Include\Mesh.h" />
+    <ClInclude Include="Scripts\Include\Pipeline.h" />
+    <ClInclude Include="Scripts\Include\Swapchain.h" />
+    <ClInclude Include="Scripts\Include\TextureImage.h" />
+    <ClInclude Include="Scripts\Include\BindingAttributeDescriptionHelper.h" />
+    <ClInclude Include="Scripts\Include\UI_Design.h" />
+    <ClInclude Include="Scripts\Include\Window.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
