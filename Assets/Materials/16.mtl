@@ -1,0 +1,16 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 09.10.2015 14:03:39
+
+newmtl Butterfly
+	Ns 25.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.1791 0.0654 0.0654
+	Kd 0.5373 0.1961 0.1961
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.5373 0.1961 0.1961
+	map_Ka 20140106055100440694.jpg
+	map_Kd 20140106055100440694.jpg
