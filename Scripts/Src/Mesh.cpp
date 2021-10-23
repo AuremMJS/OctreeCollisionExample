@@ -214,7 +214,7 @@ void Mesh::ConstructAABBMesh()
 	{
 		positions.push_back(vertex.position);
 	}
-	collider = new Collider("Object" +count,positions,3);
+	collider = new Collider("Object" +count,positions,6);
 
 	AxisAlignedBoundingBox aabb = *collider->GetAABB();
 
@@ -246,37 +246,37 @@ void Mesh::LoadMaterial(const char * filename)
 			inputFile >> tempString;
 			if (tempString == "Ns")
 			{
-				inputFile >> lightingConstants.lightSpecularExponent;
+				//inputFile >> lightingConstants.lightSpecularExponent;
 			}
 			else if (tempString == "Ka")
 			{
 				float r, g, b;
 				inputFile >> r >> g >> b;
-				lightingConstants.lightAmbient = Vec4{ r, g, b, 1.0 };
+				//lightingConstants.lightAmbient = Vec4{ r, g, b, 1.0 };
 			}
 			else if (tempString == "Ks")
 			{
 				float r, g, b;
 				inputFile >> r >> g >> b;
-				lightingConstants.lightSpecular = Vec4{ r, g, b, 1.0 };
+				//lightingConstants.lightSpecular = Vec4{ r, g, b, 1.0 };
 			}
 			else if (tempString == "Kd")
 			{
 				float r, g, b;
 				inputFile >> r >> g >> b;
-				lightingConstants.lightDiffuse = Vec4{ r, g, b, 1.0 };
+				//lightingConstants.lightDiffuse = Vec4{ r, g, b, 1.0 };
 			}
 			else if (inputFile.eof())
 				break;
 		}
 	}
 	// Set the intensities of the light
-	lightingConstants.ambientIntensity = 0;
-	lightingConstants.specularIntensity = 0;
-	lightingConstants.diffuseIntensity = 0.3;
+	//lightingConstants.ambientIntensity = 0;
+	//lightingConstants.specularIntensity = 0;
+	//lightingConstants.diffuseIntensity = 0.3;
 
 	// Set the position of the light
-	lightingConstants.lightPosition = Vec4{ 0.0f, -200.0f, 260.0f, 1.0f };
+	//lightingConstants.lightPosition = Vec4{ 0.0f, -200.0f, 260.0f, 1.0f };
 }
 
 
@@ -451,10 +451,11 @@ void Mesh::updateLightingConstants(uint32_t currentImage, Window window, Swapcha
 	LightingConstants lightConstants = lightingConstants;
 
 	Matrix4 rot = window.GetLightRotationMatrix();
-	lightConstants.lightPosition = rot * Vec4{ 0.0, 10.0, 100.0, 1.0 };// glm::vec4(85.0f, 2.0f, 100.0f, 1.0)* rot;//;
+	//lightConstants.lightPosition = rot * Vec4{ 0.0, 10.0, 100.0, 1.0 };// glm::vec4(85.0f, 2.0f, 100.0f, 1.0)* rot;//;
 
-	lightConstants.useNormalMap = collider->IsCollidedWithAny();
+	lightConstants.isCollided = collider->IsCollidedWithAny();
 	lightConstants.useOpacityMap = false;
+	lightConstants.showAABB = UIDesign::uiParams.renderAABB;
 	lightingBuffers[currentImage]->SetData(device, &lightConstants, sizeof(lightConstants));
 
 	lightConstants.useOpacityMap = true;

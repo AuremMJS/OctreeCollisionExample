@@ -19,21 +19,9 @@ struct UniformBufferObject {
 // Uniform for Lighting Constants
 struct LightingConstants
 {
-	Vec4 lightPosition;
-	Vec4 lightAmbient;
-	Vec4 lightDiffuse;
-	Vec4 lightSpecular;
-	float ambientIntensity;
-	float specularIntensity;
-	float diffuseIntensity;
-	float lightSpecularExponent;
-	float ambientEnabled = 1;
-	float specularEnabled = 1;
-	float DiffuseEnabled = 1;
-	float textureEnabled = 1;
-	float transparency;
-	float useNormalMap;
+	float isCollided;
 	float useOpacityMap;
+	float showAABB;
 };
 
 class Mesh
