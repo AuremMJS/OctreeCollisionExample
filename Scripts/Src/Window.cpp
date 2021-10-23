@@ -123,8 +123,8 @@ void Window::cursor_position_callback(GLFWwindow* window, double x, double y) {
 		if (whichButton == GLFW_MOUSE_BUTTON_LEFT) {
 			vNow.x = (2.0 * x - size) / size;
 			vNow.y = (size - 2.0 * y) / size;
-			translate_x += vNow.x - last_x;
-			translate_y += vNow.y - last_y;
+			translate_x = vNow.x - last_x;
+			translate_y = vNow.y - last_y;
 			last_x = vNow.x;
 			last_y = vNow.y;
 		}
@@ -157,8 +157,8 @@ void Window::mouse_callback(GLFWwindow* window, int button, int action, int mods
 		}
 		else if (GLFW_RELEASE == action)
 		{
-			translate_x += vNow.x - last_x;
-			translate_y += vNow.y - last_y;
+			translate_x = vNow.x - last_x;
+			translate_y = vNow.y - last_y;
 			last_x = vNow.x;
 			last_y = vNow.y;
 			isMouseDragged = false;
@@ -244,9 +244,19 @@ glm::mat4 Window::GetModelMatrix(float scaleValue)
 {
 	glm::mat4 rot = GetRotationMatrix();
 	glm::mat4 scale = glm::scale(glm::mat4(1.0), glm::vec3(scaleValue));
-	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f, 0.0f + translate_x * 2, -15.0f + translate_y * 2));
+	glm::mat4 translate = glm::translate(glm::mat4(1.0f), glm::vec3(-10.0f + translate_x * 2, translate_y * 2, 0.0f));
 	glm::mat4 model = scale * translate *rot;
 
 	return model;
+}
+
+glm::vec3 Window::GetTranslateValues()
+{
+	return glm::vec3(translate_x,translate_y,0.0f);
+}
+
+bool Window::ShouldUpdate()
+{
+	return isMouseDragged;
 }
 

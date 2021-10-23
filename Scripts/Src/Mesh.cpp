@@ -76,22 +76,23 @@ Mesh::Mesh()
 
 }
 
-Mesh::Mesh(const char * filename,Device *device,CommandPool *commandPool,int swapChainCount)
+Mesh::Mesh(const char * filename, Vec3 position, Device *device,CommandPool *commandPool,int swapChainCount)
 {
 	this->device = device;
 	this->commandPool = commandPool;
 	this->swapChainCount = swapChainCount;
+	this->position = position;
+	this->isStatic = false;
 	ParseObjFile(filename);
 	ConstructAABBMesh();
+
+	collider->Translate(position * -1);
 
 	// Create Vertex Buffer
 	createVertexBuffer();
 
 	// Create the instance buffer
 	InstanceBuffer = new Buffer(device, pow(10, 6) * sizeof(InstanceData), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	// Generate instance data
-	GenerateInstanceData();
 
 	// Create Index Buffer
 	createIndexBuffer();
@@ -108,6 +109,10 @@ Mesh::Mesh(const char * filename,Device *device,CommandPool *commandPool,int swa
 	// Create the Uniform Buffers
 	createUniformBuffers();
 
+}
+
+Mesh::~Mesh()
+{
 }
 
 void Mesh::ParseObjFile(const char * filename)
@@ -203,18 +208,21 @@ void Mesh::ParseObjFile(const char * filename)
 
 void Mesh::ConstructAABBMesh()
 {
+	static int count;
 	std::vector<Vec3> positions;
 	for (auto vertex : vertices)
 	{
 		positions.push_back(vertex.position);
 	}
-	Collider collider(positions);
-	AxisAlignedBoundingBox aabb = *collider.GetAABB();
+	collider = new Collider("Object" +count,positions,3);
 
-	std::vector<Vec3> aabbPositions = aabb.GetVertices();
+	AxisAlignedBoundingBox aabb = *collider->GetAABB();
+
+	std::vector<Vec3> aabbPositions = aabb.GetOctreeVertices();//  aabb.GetVertices();
 	std::vector<Vec3> aabbTexCoords = aabb.GetTexCoords();
 
-	for (auto index : aabb.GetIndices())
+	//for (auto index : aabb.GetIndices())
+	for (auto index : aabb.GetOctreeIndices())
 	{
 		Vertex v;
 		v.position = aabbPositions[index.positionIndex];
@@ -223,21 +231,15 @@ void Mesh::ConstructAABBMesh()
 		int vertex_index = aabbVertices.size();
 		aabbIndices.push_back(vertex_index - 1);
 	}
+	count++;
 }
 
 void Mesh::LoadMaterial(const char * filename)
 {
 	std::ifstream inputFile;
 	inputFile.open(filename);
-	if (!inputFile.is_open())
+	if (inputFile.is_open())
 	{
-		UIDesign::uiParams.isMTLFileAvailable = false;
-		UIDesign::uiParams.useMTLFile = false;
-	}
-	else
-	{
-		UIDesign::uiParams.isMTLFileAvailable = true;
-		UIDesign::uiParams.useMTLFile = true;
 		std::string tempString = "";
 		while (true)
 		{
@@ -269,8 +271,8 @@ void Mesh::LoadMaterial(const char * filename)
 		}
 	}
 	// Set the intensities of the light
-	lightingConstants.ambientIntensity = UIDesign::uiParams.ambientIntensity;
-	lightingConstants.specularIntensity = UIDesign::uiParams.iridescenceIntensity;
+	lightingConstants.ambientIntensity = 0;
+	lightingConstants.specularIntensity = 0;
 	lightingConstants.diffuseIntensity = 0.3;
 
 	// Set the position of the light
@@ -316,32 +318,6 @@ void Mesh::createAABBVertexBuffer() {
 	AABBVertexBuffer->SetDataUsingStageBuffer(device, aabbVertices.data(), bufferSize, commandPool);
 }
 
-
-// Function to generate instance data
-void Mesh::GenerateInstanceData()
-{
-	std::vector<InstanceData> instanceData;
-	int noOfButterflies = pow(10, UIDesign::uiParams.noOfButterflies);
-	instanceData.resize(noOfButterflies);
-
-	int random = 0;
-	for (auto i = 0; noOfButterflies != 1 && i < noOfButterflies; i++) {
-		float x = (float)(rand() % 50 - 25);
-		float y = (float)(rand() % 50 - 25);
-		float z = (float)(rand() % 50 - 25);
-		instanceData[i].instancePosition = Vec3{ x, y, z };
-		instanceData[i].scale = 1.0 / 10.0;
-		x = (float)(rand() % 50 - 25);
-		y = (float)(rand() % 50 - 25);
-		z = (float)(rand() % 50 - 25);
-		instanceData[i].rotation = Vec3{ x, y, z };
-	}
-
-	// Set instance data
-	InstanceBuffer->SetData(device, instanceData.data(),
-		instanceData.size() * sizeof(InstanceData));
-}
-
 void Mesh::Draw(VkCommandBuffer commandBuffer, Pipeline graphicsPipeline, int currentImage)
 {
 	VkBuffer vertexBuffers[] = { VertexBuffer->buffer };
@@ -362,8 +338,7 @@ void Mesh::Draw(VkCommandBuffer commandBuffer, Pipeline graphicsPipeline, int cu
 
 	// Draw the meshes
 	vkCmdDrawIndexed(commandBuffer,
-		static_cast<uint32_t>(indices.size()), pow(10, UIDesign::uiParams.noOfButterflies),
-		0, 0, 0);
+		static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 }
 
 void Mesh::DrawAABB(VkCommandBuffer commandBuffer, Pipeline graphicsPipeline, int currentImage)
@@ -389,7 +364,6 @@ void Mesh::DrawAABB(VkCommandBuffer commandBuffer, Pipeline graphicsPipeline, in
 
 void Mesh::Cleanup()
 {
-
 	// Destroy the index buffer
 	IndexBuffer->Cleanup(device);
 
@@ -424,6 +398,11 @@ void Mesh::CleanupUniformBuffers()
 	}
 }
 
+void Mesh::SetStatic(bool isStatic)
+{
+	this->isStatic = isStatic;
+}
+
 // Function to create descriptor sets for each Vk Buffer
 void Mesh::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout,
 	VkDescriptorPool descriptorPool) {
@@ -436,20 +415,34 @@ void Mesh::createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout,
 }
 
 // Function to update uniform buffer values
-void Mesh::updateUniformBuffer(uint32_t currentImage,Window window, Swapchain *swapChain) {
+void Mesh::updateUniformBuffer(uint32_t currentImage, Window window, Swapchain *swapChain) {
 
 	UniformBufferObject ubo = {};
 
-	ubo.model = window.GetModelMatrix(UIDesign::uiParams.scale / (float)pow(2, UIDesign::uiParams.prevnoOfButterflies));
-
-	ubo.view = glm::lookAt(glm::vec3(85.0f, 2.0f, 100.0f), glm::vec3(0.0f, 0.0f, 40.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	if (!isStatic && window.ShouldUpdate())
+	{
+		glm::vec3 translateVec = window.GetTranslateValues();
+		position = position - Vec3(translateVec.x, translateVec.y, translateVec.z);
+		collider->Translate(Vec3(translateVec.x, translateVec.y, translateVec.z));
+		ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(UIDesign::uiParams.scale)) *
+			glm::translate(glm::mat4(1), glm::vec3(position.x, position.y, position.z)) *
+			window.GetRotationMatrix();
+	}
+	else
+	{ 
+	ubo.model = glm::scale(glm::mat4(1.0f),glm::vec3(UIDesign::uiParams.scale)) *
+			glm::translate(glm::mat4(1), glm::vec3(position.x, position.y, position.z)) *
+			window.GetRotationMatrix();
+	}
+	ubo.view = glm::lookAt(glm::vec3(0.0f, 2.0f, 100.0f), 
+		 glm::vec3(0.0f, 0.0f, 40.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	ubo.proj = glm::perspective(glm::radians(45.0f),
 		swapChain->swapChainExtent.width / (float)swapChain->swapChainExtent.height, 0.1f, 1000.0f);
 	ubo.proj[1][1] *= -1;
 
 	uniformBuffers[currentImage]->SetData(device, &ubo, sizeof(ubo));
-	ubo.model = ubo.model * glm::inverse(window.GetRotationMatrix());
+	//ubo.model = ubo.model * glm::inverse(window.GetRotationMatrix());
 	aabbUniformBuffers[currentImage]->SetData(device, &ubo, sizeof(ubo));
 }
 
@@ -458,16 +451,9 @@ void Mesh::updateLightingConstants(uint32_t currentImage, Window window, Swapcha
 	LightingConstants lightConstants = lightingConstants;
 
 	Matrix4 rot = window.GetLightRotationMatrix();
-	lightConstants.lightSpecularExponent = UIDesign::uiParams.useMTLFile ? lightingConstants.lightSpecularExponent : UIDesign::uiParams.spectralExponent;
-	lightConstants.ambientIntensity = UIDesign::uiParams.ambientIntensity;
-	lightConstants.specularIntensity = UIDesign::uiParams.iridescenceIntensity;
 	lightConstants.lightPosition = rot * Vec4{ 0.0, 10.0, 100.0, 1.0 };// glm::vec4(85.0f, 2.0f, 100.0f, 1.0)* rot;//;
-	UIDesign::uiParams.lightPosition = lightConstants.lightPosition;
-	lightConstants.transparency = UIDesign::uiParams.transparency;
-	lightConstants.ambientEnabled = UIDesign::uiParams.ambientEnabled;
-	lightConstants.specularEnabled = UIDesign::uiParams.specularEnabled;
-	lightConstants.DiffuseEnabled = UIDesign::uiParams.iridescenceEnabled;
-	lightConstants.useNormalMap = UIDesign::uiParams.useNormalMap;
+
+	lightConstants.useNormalMap = collider->IsCollidedWithAny();
 	lightConstants.useOpacityMap = false;
 	lightingBuffers[currentImage]->SetData(device, &lightConstants, sizeof(lightConstants));
 

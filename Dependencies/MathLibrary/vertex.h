@@ -16,7 +16,6 @@ struct Vertex
 
 #endif
 
-
 #ifndef INSTANCE_DATA
 #define INSTANCE_DATA
 
@@ -28,4 +27,4 @@ struct InstanceData
 	float scale;
 };
 
-#endif
+#endif // !INSTANCEDATA

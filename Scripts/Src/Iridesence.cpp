@@ -63,7 +63,7 @@ void Application::FetchIridescentColoursFromSpectra() {
 	xyz = GetXYZColorFromSpectra(spectra);
 	rgb = ConvertXYZtoRGB(xyz);
 	UIDesign::uiParams.outputLightColor = rgb;
-	m.lightingConstants.lightAmbient = Vec4{ UIDesign::uiParams.inputLightColor.x, UIDesign::uiParams.inputLightColor.y, UIDesign::uiParams.inputLightColor.z, 1.0 };
+	ball.lightingConstants.lightAmbient = Vec4{ UIDesign::uiParams.inputLightColor.x, UIDesign::uiParams.inputLightColor.y, UIDesign::uiParams.inputLightColor.z, 1.0 };
 	spectra.clear();
 
 	// Done reading, so unmap.

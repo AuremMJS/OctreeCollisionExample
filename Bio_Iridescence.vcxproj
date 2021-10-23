@@ -175,7 +175,6 @@
     <ClCompile Include="Scripts\Src\Device.cpp" />
     <ClCompile Include="Scripts\Src\Image.cpp" />
     <ClCompile Include="Scripts\Src\ImGuiHelper.cpp" />
-    <ClCompile Include="Scripts\Src\Iridesence.cpp" />
     <ClCompile Include="Scripts\Src\main.cpp" />
     <ClCompile Include="Scripts\Src\Mesh.cpp" />
     <ClCompile Include="Scripts\Src\Pipeline.cpp" />

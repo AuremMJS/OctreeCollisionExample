@@ -71,7 +71,9 @@ class Application
 private:
 
 	// Mesh loaded
-	Mesh m;
+	Mesh ball;
+
+	Mesh ball2;
 
 	Window window;
 
@@ -109,8 +111,6 @@ private:
 	// Command Pool
 	CommandPool *commandPool;
 
-	Buffer *SpectralParametersBuffer;
-
 	// Descriptor Pool to create descriptor sets
 	VkDescriptorPool descriptorPool;
 
@@ -138,87 +138,6 @@ private:
 	// Flag to indicate whether frame buffer is resized due to window resizing
 	bool framebufferResized = false;
 
-	// Descriptor Set Layout for Compute Pipeline
-	VkDescriptorSetLayout computeDescriptorSetLayout;
-
-	// Pipeline layout - compute pipeline
-	VkPipelineLayout computePipelineLayout;
-
-	// Compute pipeline
-	//VkPipeline ComputePipeline;
-	Pipeline ComputePipeline;
-
-	// Command Pool
-	VkCommandPool computeCommandPool;
-
-	// Descriptor Pool to create descriptor sets in compute pipeline
-	VkDescriptorPool computeDescriptorPool;
-
-	// Descriptor sets to bind each VkBuffer to descriptor for compute pipeline
-	VkDescriptorSet computeDescriptorSet;
-
-	// Compute Command Buffers
-	VkCommandBuffer computeCommandBuffer;
-
-	// Buffers for compute pipeline
-	Buffer *ComputeBuffers;
-
-	// Buffer size for compute pipeline
-	uint32_t ComputeBufferSize; // size of buffer in bytes.
-
-	// Map of wavelength and colour matching functions
-	std::map<double, Vec3> ColorMatchingFunctionMap;
-
-	// Map of hue angle and wavelength
-	std::map<std::string, double> HueAngleWavelengthMap;
-
-	// Map of hue angle and chromaticity coordinates
-	std::map<std::string, Vec3> HueAngleCoordMap;
-
-	// Fourier Matrix
-	Matrix3 FourierMatrix;
-
-	// Fourier Coefficients
-	Vec3 FourierCoeffs;
-
-	// Spectral Parameters value
-	SpectralPipelineParameters spectralParameters;
-
-	// Iridescent colours generated in the compute shader
-	IridescentColors iridescentColors;
-
-	// Vertices for Quad
-	std::vector<Vertex> QuadVertices;
-
-	// Indices for Quad
-	std::vector<int> QuadIndices;
-
-	// Descriptor Set Layout
-	VkDescriptorSetLayout quadDescriptorSetLayout;
-
-	// Quad Pipeline layout - uniforms
-	VkPipelineLayout quadPipelineLayout;
-
-	// Quad Graphics pipeline
-	Pipeline quadGraphicsPipeline;
-
-	// Quad Vertex Buffer
-	Buffer *quadVertexBuffer;
-
-	// Quad Index Buffer
-	Buffer *quadIndexBuffer;
-
-	// Descriptor Pool to create descriptor sets for quad pipeline
-	VkDescriptorPool quadDescriptorPool;
-
-	// Descriptor sets to bind each VkBuffer to the uniform buffer descriptor of quad pipeline
-	std::vector<VkDescriptorSet> quadDescriptorSets;
-
-	// Reference Image
-	TextureImage *refImage;
-
-	// Collection of peak wavelengths
-	std::vector<float> peakWavelengths;
 
 public:
 	

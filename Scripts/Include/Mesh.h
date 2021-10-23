@@ -6,6 +6,7 @@
 #include "Pipeline.h"
 #include "TextureImage.h"
 #include "Window.h"
+#include "CollisionEngine\Collider.h"
 #include <vector>
 
 // Uniforms for model, view, projection transformations
@@ -38,7 +39,10 @@ struct LightingConstants
 class Mesh
 {
 private:
+	bool isStatic;
+	Vec3 position;
 	Device *device;
+	Collider* collider;
 	CommandPool *commandPool;
 	// Vertices of the mesh
 	std::vector<Vertex> aabbVertices;
@@ -82,6 +86,8 @@ public:
 
 	TextureImage *aabbOpacityImage;
 
+	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorPool descriptorPool;
 
 	// Descriptor sets to bind each VkBuffer to the uniform buffer descriptor
 	std::vector<VkDescriptorSet> descriptorSets;
@@ -104,8 +110,8 @@ public:
 	int swapChainCount;
 
 	Mesh();
-	Mesh(const char* filename, Device *device, CommandPool *commandPool,int swapChainCount);
-
+	Mesh(const char* filename, Vec3 position, Device *device, CommandPool *commandPool,int swapChainCount);
+	~Mesh();
 	// Function to parse a obj file
 	void ParseObjFile(const char* filename);
 
@@ -128,10 +134,9 @@ public:
 	void createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout,
 		VkDescriptorPool descriptorPool);
 
-	void createUniformBuffers();
+	void createDescriptorSetLayout();
 
-	// Function to generate instance data
-	void GenerateInstanceData();
+	void createUniformBuffers();
 
 	void Draw(VkCommandBuffer commandBuffer, Pipeline graphicsPipeline, int currentImage);
 
@@ -144,4 +149,6 @@ public:
 	void Cleanup();
 
 	void CleanupUniformBuffers();
+
+	void SetStatic(bool isStatic);
 };

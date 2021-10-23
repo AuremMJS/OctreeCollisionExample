@@ -18,9 +18,14 @@ public:
 		z = mZ;
 	}
 
-	double operator*(Vec3 *other)
+	Vec3 operator +(Vec3 other)
 	{
-		return x * other->x + y * other->y + z * other->z;
+		return { x + other.x, y + other.y, z + other.z };
+	}
+
+	double operator*(Vec3 other)
+	{
+		return x * other.x + y * other.y + z * other.z;
 	}
 	
 	Vec3 operator *(double scalar)
@@ -43,7 +48,7 @@ public:
 
 	double Angle(Vec3 *other)
 	{
-		float dotProduct = (*this * other) / (Magnitude() * other->Magnitude());
+		float dotProduct = (*this * *other) / (Magnitude() * other->Magnitude());
 		float det = this->x * other->y - this->y * other->x;
 		double angle = atan2(det,dotProduct);// acos(dotProduct);
 		angle = round(angle * 1000.0) / 1000.0;

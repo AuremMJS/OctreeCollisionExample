@@ -1,7 +1,7 @@
 #include "Application.h"
 #include "UI_Design.h"
 #include "Debug.h"
-
+#include "CollisionEngine\CollisionEngine.h"
 // Constructor
 Application::Application()
 {
@@ -31,6 +31,7 @@ void Application::run() {
 
 // Function to initialize the Vulkan objects
 void Application::initVulkan() {
+
 	// Create the Instance
 	// An  instance is the connection between the application and Vulkan library
 	createInstance();
@@ -41,46 +42,8 @@ void Application::initVulkan() {
 	// Create Device
 	device = new Device(&instance, window.GetGLFWWindow());
 
-	// Read the colour mathching functions file
-	ReadColorMatchingXMLFile(COLOR_MATCH_FUNCTIONS);
-
-	// Find the fourier matrix
-	FindFourierMatrix();
-
-	// Read the chromaticity coords file
-	ReadChromaticityXMLFile(CHROMATICITY_COORDS);
-
 	// Create Command Pool
 	commandPool = new CommandPool(device);
-
-	// Set the compute buffer size
-	ComputeBufferSize = sizeof(Pixel) * WIDTH * HEIGHT;
-
-	// Create descriptor set layout for compute pipeline
-	createComputeDescriptorSetLayout();
-
-	// Create compute pipeline
-	createComputePipeline();
-
-	// Create command pool for compute pipeline
-	createComputeCommandPool();
-
-	// Create buffers for compute pipeline
-	createComputeBuffers();
-
-	// Create the Descriptor Pool to create descriptor sets for compute pipeline
-	computeDescriptorPool = createDescriptorPool(1, {
-		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-
-	// Create descriptor sets
-	createComputeDescriptorSet();
-
-	// Update the spectral paramters
-	UpdateSpectralParameters();
-
-	// Create command buffers for compute pipeline
-	createComputeCommandBuffers();
 
 	// Create Swap chain
 	swapChain = new Swapchain(device, window.GetGLFWWindow());
@@ -91,14 +54,8 @@ void Application::initVulkan() {
 	// Create Descriptor Set layout
 	createDescriptorSetLayout();
 
-	// Create Shadow Map Descriptor Set layout
-	createQuadDescriptorSetLayout();
-
 	// Create the graphics pipeline
 	createGraphicsPipeline();
-
-	// Create the quad graphics pipeline
-	createQuadGraphicsPipeline();
 
 	// Init ImGUI
 	imGui = new ImGuiHelper(&instance, window.GetGLFWWindow(), device, swapChain, commandPool);
@@ -109,39 +66,23 @@ void Application::initVulkan() {
 	// Create Frame Buffers
 	createFramebuffers();
 
-	// Init the quad
-	InitQuad();
-
 	// Parse the Object file
-	m = Mesh(MODEL,device,commandPool,swapChain->swapChainImages.size());
+	ball = Mesh(MODEL,Vec3(-40,0,0), device,commandPool,swapChain->swapChainImages.size());
 
-	//Mesh aabbMesh = ConstructAABBMesh(m);
-
-	//m = aabbMesh;
-
-	// Create texture image for reference image
-	refImage = new TextureImage(device, commandPool, REFERENCE_IMAGE);
-
-	// Create quad vertex and index buffer
-	createQuadVertexBuffer();
-	createQuadIndexBuffer();
+	ball2 = Mesh(MODEL, Vec3(40, 0, 0), device, commandPool, swapChain->swapChainImages.size());
 
 	// Create the Descriptor Pool to create descriptor sets
-	descriptorPool = createDescriptorPool(swapChain->swapChainImages.size() * 2, {
+	descriptorPool = createDescriptorPool(swapChain->swapChainImages.size() * 4, {
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
 		});
 
 	// Create descriptor sets
-	m.createDescriptorSets(descriptorSetLayout, descriptorPool);
+	ball.createDescriptorSets(descriptorSetLayout, descriptorPool);
 
-	// Create the Descriptor Pool to create descriptor sets
-	quadDescriptorPool = createDescriptorPool(swapChain->swapChainImages.size(), 
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-
-	// Create descriptor sets
-	createQuadDescriptorSets();
+	ball2.createDescriptorSets(descriptorSetLayout, descriptorPool);
+	ball2.SetStatic(true);
 
 	// Create Command Buffers
 	createCommandBuffers();
@@ -156,34 +97,12 @@ void Application::mainLoop() {
 
 	// Event loop to keep the application running until there is an error or window is closed
 	while (!glfwWindowShouldClose(window.GetGLFWWindow())) {
+		CollisionEngine::GetInstance()->SetActive(UIDesign::uiParams.isCollisionEnabled);
+
+		CollisionEngine::GetInstance()->CollisionLoop();
 
 		// Checks for events like Window close by the user
 		glfwPollEvents();
-
-		// Generate Instance data and render many copies of the mesh
-		if (UIDesign::uiParams.shouldUpdateNoOfButterflies)
-		{
-			m.GenerateInstanceData();
-
-			createCommandBuffers();
-
-			UIDesign::uiParams.shouldUpdateNoOfButterflies = false;
-		}
-
-		// Regenerate the iridescent colours
-		if (UIDesign::uiParams.shouldRegenerateIridescentColours)
-		{
-
-			UpdateSpectralParameters();
-
-			createComputeCommandBuffers();
-
-			runComputeCommandBuffer();
-
-			FetchIridescentColoursFromSpectra();
-
-			UIDesign::uiParams.shouldRegenerateIridescentColours = false;
-		}
 
 		// Update ImGUI Min Image Count if resized
 		if (framebufferResized)
@@ -205,28 +124,10 @@ void Application::cleanup() {
 	// Cleanup swap chain
 	cleanupSwapChain();
 
-	// Destroy the compute pipeline
-	ComputePipeline.DestroyPipeline();
-
-	// Destroy the descriptor pool
-	vkDestroyDescriptorPool(device->logicalDevice, computeDescriptorPool, nullptr);
-
-	refImage->Cleanup(device);
-
+	ball.Cleanup();
+	ball2.Cleanup();
 	// Destroy the descriptor sets
 	vkDestroyDescriptorSetLayout(device->logicalDevice, descriptorSetLayout, nullptr);
-	vkDestroyDescriptorSetLayout(device->logicalDevice, computeDescriptorSetLayout, nullptr);
-	vkDestroyDescriptorSetLayout(device->logicalDevice, quadDescriptorSetLayout, nullptr);
-
-	// Cleanup the spectral parameters
-	SpectralParametersBuffer->Cleanup(device);
-
-	// Cleanup the compute buffers
-	ComputeBuffers->Cleanup(device);
-	m.Cleanup();
-	// Destroy quad index and vertex buffers
-	quadIndexBuffer->Cleanup(device);
-	quadVertexBuffer->Cleanup(device);
 
 	// Destroy the semaphores and fences
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -243,9 +144,6 @@ void Application::cleanup() {
 
 	// Destroy command pool
 	commandPool->Cleanup(device);
-
-	// Destroy compute command pool
-	vkDestroyCommandPool(device->logicalDevice, computeCommandPool, nullptr);
 
 	// Check whether validation layers are enabled
 	if (enableValidationLayers) {
@@ -420,7 +318,7 @@ void Application::createRenderPass() {
 
 	// Subpass desciption
 	// Subpass desciption
-	std::array<VkSubpassDescription, 2> subpasses = {};
+	std::array<VkSubpassDescription, 1> subpasses = {};
 
 	// Specify where the subpass has to be executed
 	subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -430,15 +328,8 @@ void Application::createRenderPass() {
 	subpasses[0].pColorAttachments = &colorAttachmentRef;
 	subpasses[0].pDepthStencilAttachment = &depthAttachmentRef;
 
-	subpasses[1].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	// Specify the number of color attachment references
-	subpasses[1].colorAttachmentCount = 1;
-	// Specify the pointer to the color attachment reference
-	subpasses[1].pColorAttachments = &colorAttachmentRef;
-	subpasses[1].pDepthStencilAttachment = &depthAttachmentRef;
-
 	// Subpass dependency to make the render pass wait for the color attachment output bit stage
-	std::array<VkSubpassDependency, 2> dependencies = {};
+	std::array<VkSubpassDependency, 1> dependencies = {};
 	// Specify the dependency and dependent subpasses
 	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass = 0;
@@ -448,16 +339,6 @@ void Application::createRenderPass() {
 	// Specify the operation that should wait
 	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	// Specify the dependency and dependent subpasses
-	dependencies[1].srcSubpass = 0;
-	dependencies[1].dstSubpass = 1;
-	// Specify the operation to wait for. i.e, wait for the swap chain to read the image
-	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].srcAccessMask = 0;
-	// Specify the operation that should wait
-	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 
@@ -662,35 +543,14 @@ void Application::createCommandBuffers() {
 		
 		VkDeviceSize offsets[] = { 0 };
 
-		m.Draw(commandBuffers[i],graphicsPipeline,i);
+		ball.Draw(commandBuffers[i],graphicsPipeline,i);
 
-		m.DrawAABB(commandBuffers[i], graphicsPipeline, i);
+		ball2.Draw(commandBuffers[i], graphicsPipeline, i);
 
-		// Move to next subpass
-		vkCmdNextSubpass(commandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
+		ball.DrawAABB(commandBuffers[i], graphicsPipeline, i);
 
-		// Render the Quad
-		if (true)
-		{
-			VkBuffer quadVertexBuffers[] = { quadVertexBuffer->buffer };
+		ball2.DrawAABB(commandBuffers[i], graphicsPipeline, i);
 
-			//vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-			//	quadPipelineLayout, 0, 1, &quadDescriptorSets[i], 0, nullptr);
-			quadGraphicsPipeline.BindDescriptorSets(commandBuffers[i], quadDescriptorSets[i]);
-
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, quadVertexBuffers, offsets);
-
-			vkCmdBindIndexBuffer(commandBuffers[i], quadIndexBuffer->buffer, 0, 
-				VK_INDEX_TYPE_UINT32);
-
-	/*		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, 
-				quadGraphicsPipeline);*/
-			quadGraphicsPipeline.BindPipelineToCommandBuffer(commandBuffers[i]);
-
-			// Draw the Quad
-			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(QuadIndices.size()),
-				1, 0, 0, 0);
-		}
 		// End the render pass recording
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -861,7 +721,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Application::debugCallback(
 // Function to draw the frame on the screen
 // Acquires the image from the swap chain and executes command buffer and returns the image to swap chain for presentation
 void Application::drawFrame() {
-	UIDesign::uiParams.peakWavelength = peakWavelengths[UIDesign::uiParams.IncidencAngleToVerify];
+	//UIDesign::uiParams.peakWavelength = peakWavelengths[UIDesign::uiParams.IncidencAngleToVerify];
 	imGui->DrawImGUI(device, UIDesign::DrawUI);
 
 	// Wait for frame to finish
@@ -897,10 +757,12 @@ void Application::drawFrame() {
 	imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
 	// Update the uniform buffer to have the current model view projection matrices
-	m.updateUniformBuffer(imageIndex, window, swapChain);
+	ball.updateUniformBuffer(imageIndex, window, swapChain);
+	ball2.updateUniformBuffer(imageIndex, window, swapChain);
 
 	// Update the uniform buffer to have the current ambient, specular, diffuse values
-	m.updateLightingConstants(imageIndex, window, swapChain);
+	ball.updateLightingConstants(imageIndex, window, swapChain);
+	ball2.updateLightingConstants(imageIndex, window, swapChain);
 
 	imGui->RenderImGUI(device, swapChain->swapChainExtent, imageIndex);
 
@@ -1016,7 +878,7 @@ void Application::recreateSwapChain() {
 	// Create Graphics pipeline
 	createGraphicsPipeline();
 
-	createQuadGraphicsPipeline();
+	//createQuadGraphicsPipeline();
 
 	createDepthResources();
 
@@ -1024,20 +886,17 @@ void Application::recreateSwapChain() {
 	createFramebuffers();
 
 	// Recreate uniform buffers
-	m.createUniformBuffers();
-
+	ball.createUniformBuffers();
+	ball2.createUniformBuffers();
 	// Recreate the descriptor sets
 
-	descriptorPool = createDescriptorPool(swapChain->swapChainImages.size() * 2, {
+	descriptorPool = createDescriptorPool(swapChain->swapChainImages.size() * 4, {
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
 		});
-	m.createDescriptorSets(descriptorSetLayout, descriptorPool);
-	quadDescriptorPool = createDescriptorPool(swapChain->swapChainImages.size(),
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-	createQuadDescriptorSets();
-
+	ball.createDescriptorSets(descriptorSetLayout, descriptorPool);
+	ball2.createDescriptorSets(descriptorSetLayout, descriptorPool);
 	// Create command buffers
 	createCommandBuffers();
 
@@ -1059,21 +918,15 @@ void Application::cleanupSwapChain() {
 	// Destroy the graphics pipeline
 	graphicsPipeline.DestroyPipeline();
 
-	// Destroy the graphics pipeline
-	quadGraphicsPipeline.DestroyPipeline();
-
 	// Destroy the render pass
 	vkDestroyRenderPass(device->logicalDevice, renderPass, nullptr);
 
 	swapChain->Cleanup(device);
 
-	m.CleanupUniformBuffers();
-
+	ball.CleanupUniformBuffers();
+	ball2.CleanupUniformBuffers();
 	// Destroy the descriptor pool
 	vkDestroyDescriptorPool(device->logicalDevice, descriptorPool, nullptr);
-
-	// Destroy the descriptor pool
-	vkDestroyDescriptorPool(device->logicalDevice, quadDescriptorPool, nullptr);
 
 	// Cleanup ImGUI
 	imGui->CleanupImGUI(device);
@@ -1085,263 +938,8 @@ void Application::createDepthResources() {
 	depthImage = new Image(device, swapChain->swapChainExtent.width, swapChain->swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_TYPE_2D);
 }
 
-// Function to create the Graphics pipeline
-	// Graphics Pipeline - Sequence of operations with vertices & textures as input and pixels to render as output
-void Application::createComputePipeline() {
-
-	std::unordered_map<VkShaderStageFlagBits, std::string>	computeShaderMap;
-	computeShaderMap.emplace(VK_SHADER_STAGE_COMPUTE_BIT, "shaders/Comp.spv");
-
-	AdditionalPipelineParams additionalParams = {};
-	OptionalPipelineParams optionalParams = {};
-	ComputePipeline.CreatePipeline(device, swapChain, renderPass, computeDescriptorSetLayout,
-		computeShaderMap, additionalParams,optionalParams, true);
-}
-
-// Function to create command pool for compute pipeline
-// Command Pool - Manage the memory used to store the buffers. Command buffers are allocated from Command Pools
-void Application::createComputeCommandPool() {
-	// Query the queue family indices
-	QueueFamilyIndices queueFamilyIndices = device->findQueueFamilies();
-
-	// Command pool create info
-	VkCommandPoolCreateInfo poolInfo = {};
-	// Type of information stored in the structure
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	// Specify the graphics queue family index as the commands are for drawing
-	poolInfo.queueFamilyIndex = queueFamilyIndices.computeFamily.value();
-	// Set the flag to zero as command buffers will be recorded only at the program start
-	poolInfo.flags = 0; // Optional
-
-	// Create command pool
-	// 1st Parameter - GPU
-	// 2nd Parameter - command pool create info
-	// 3rd Parameter - Custom allocator
-	// 4th Parameter - pointer to created command pool
-	if (vkCreateCommandPool(device->logicalDevice, &poolInfo, nullptr, &computeCommandPool) != VK_SUCCESS) {
-		// Throw runtime error exception as compute command pool creation failed
-		throw std::runtime_error("failed to compute create command pool!");
-	}
-}
-
-// Function to create Compute Uniform Buffers
-void Application::createComputeBuffers() {
-
-	VkDeviceSize bufferSize = ComputeBufferSize;
-
-	ComputeBuffers = new Buffer(device, bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-	VkDeviceSize spectraBufferSize = sizeof(SpectralPipelineParameters);
-
-	SpectralParametersBuffer = new Buffer(device, spectraBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-}
-
-// Function to create command buffers
-	// Command Buffers - All drawing operations are recorded in a command buffer
-void Application::createComputeCommandBuffers() {
-
-	// Command Buffer Allocate Info
-	VkCommandBufferAllocateInfo allocInfo = {};
-	// Type of information stored in the structure
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	// Specify the command pool
-	allocInfo.commandPool = computeCommandPool;
-	// Specify the command buffer is primary command buffer - can be submitted to queue for execution, but cannot be called from another other command buffer
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	// Specify the no of buffers to allocate
-	allocInfo.commandBufferCount = 1;
-
-	// Allocate command buffers
-	// 1st Parameter - GPU
-	// 2nd Parameter - Command Buffer allocate info
-	// 3rd Parameter - Pointer to Command Buffers
-	if (vkAllocateCommandBuffers(device->logicalDevice, &allocInfo, &computeCommandBuffer) != VK_SUCCESS) {
-		// Throw runtime error exception as allocation for command buffers failed
-		throw std::runtime_error("failed to allocate command buffers!");
-	}
-
-	// Command buffer begin info to start command buffer recording
-	VkCommandBufferBeginInfo beginInfo = {};
-	// Type of information stored in the structure
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	// Specify how the command buffer is used
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // Optional
-	// Specify which state to inherit from, in case of secondary command buffer
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	// Start record the command buffer
-	// 1st Parameter - command buffer to start recording
-	// 2nd Parameter - Begin info
-	if (vkBeginCommandBuffer(computeCommandBuffer, &beginInfo) != VK_SUCCESS) {
-		// Throw runtime error exception
-		throw std::runtime_error("failed to begin recording command buffer!");
-	}
-
-
-	// Bind the pipeline
-	// 1st Parameter - command buffer 
-	// 2nd Parameter - whether the pipeline object is graphics pipeline or compute pipeline
-	// 3rd Parameter - graphics pipeline
-	//vkCmdBindPipeline(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, ComputePipeline);
-	ComputePipeline.BindPipelineToCommandBuffer(computeCommandBuffer);
-
-	/*vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, 
-		computePipelineLayout, 0, 1, &computeDescriptorSet, 0, nullptr);*/
-	ComputePipeline.BindDescriptorSets(computeCommandBuffer, computeDescriptorSet);
-
-	int workgroups_x = (uint32_t)ceil(spectralParameters.textureWidth / float(32));
-	int workgroups_y = (uint32_t)ceil(spectralParameters.textureHeight / float(32));
-	vkCmdDispatch(computeCommandBuffer, workgroups_x, workgroups_y, 1);
-
-	// End the command buffer recording
-	if (vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS) {
-		// Throw runtime error exception as command buffer recording cannot be ended
-		throw std::runtime_error("failed to record command buffer!");
-	}
-
-}
-
-void Application::runComputeCommandBuffer() {
-	/*
-	Now we shall finally submit the recorded command buffer to a queue.
-	*/
-
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1; // submit a single command buffer
-	submitInfo.pCommandBuffers = &computeCommandBuffer; // the command buffer to submit.
-
-	/*
-	  We create a fence.
-	*/
-	VkFence fence;
-	VkFenceCreateInfo fenceCreateInfo = {};
-	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fenceCreateInfo.flags = 0;
-	vkCreateFence(device->logicalDevice, &fenceCreateInfo, NULL, &fence);
-
-	/*
-	We submit the command buffer on the queue, at the same time giving a fence.
-	*/
-	vkQueueSubmit(device->computeQueue, 1, &submitInfo, fence);
-	/*
-	The command will not have finished executing until the fence is signalled.
-	So we wait here.
-	We will directly after this read our buffer from the GPU,
-	and we will not be sure that the command has finished executing unless we wait for the fence.
-	Hence, we use a fence here.
-	*/
-	vkWaitForFences(device->logicalDevice, 1, &fence, VK_TRUE, 100000000000);
-
-	vkDestroyFence(device->logicalDevice, fence, NULL);
-}
-
 void Application::OnWindowResized()
 {
 	// Set the frame buffer resized flag to true
 	framebufferResized = true;
-}
-
-// Init Quad
-void Application::InitQuad()
-{
-	Vertex v;
-	Vec3 pos;
-	pos.x = -1.0;
-	pos.y = -0.55;
-	pos.z = 0;
-	v.position = pos;
-
-	Vec3 tex;
-	tex.x = 0.0;
-	tex.y = 1.0;
-	v.tex = tex;
-
-	Vertex v2;
-	Vec3 pos2;
-	pos2.x = -0.55;
-	pos2.y = -0.55;
-	pos2.z = 0;
-	v2.position = pos2;
-
-	Vec3 tex2;
-	tex2.x = 1.0;
-	tex2.y = 1.0;
-	v2.tex = tex2;
-
-	Vertex v3;
-	Vec3 pos3;
-	pos3.x = -1.0;
-	pos3.y = -1.0;
-	pos3.z = 0.0;
-	v3.position = pos3;
-
-	Vec3 tex3;
-	tex3.x = 0.0;
-	tex3.y = 0.0;
-	v3.tex = tex3;
-
-	Vertex v4;
-	Vec3 pos4;
-	pos4.x = -0.55;
-	pos4.y = -1.0;
-	pos4.z = 0;
-	v4.position = pos4;
-
-
-	Vec3 tex4;
-	tex4.x = 1.0;
-	tex4.y = 0.0;
-	v4.tex = tex4;
-
-	QuadVertices.push_back(v);
-	QuadVertices.push_back(v2);
-	QuadVertices.push_back(v3);
-	QuadVertices.push_back(v4);
-
-	QuadIndices.push_back(0);
-	QuadIndices.push_back(1);
-	QuadIndices.push_back(2);
-
-	QuadIndices.push_back(2);
-	QuadIndices.push_back(1);
-	QuadIndices.push_back(3);
-
-}
-
-// Function to create the Graphics pipeline
-// Graphics Pipeline - Sequence of operations with vertices & textures as input and pixels to render as output
-void Application::createQuadGraphicsPipeline() {
-	std::unordered_map<VkShaderStageFlagBits, std::string>	quadGraphicsShaderMap;
-	quadGraphicsShaderMap.emplace(VK_SHADER_STAGE_VERTEX_BIT, "shaders/quad_vert.spv");
-	quadGraphicsShaderMap.emplace(VK_SHADER_STAGE_FRAGMENT_BIT, "shaders/quad_frag.spv");
-
-	AdditionalPipelineParams additionalParams = {};
-	additionalParams.CullMode = VK_CULL_MODE_BACK_BIT;
-	additionalParams.StencilTestEnable = VK_TRUE;
-	additionalParams.ColorBlendEnable = VK_FALSE;
-	additionalParams.SubPass = 1;
-
-	quadGraphicsPipeline.CreatePipeline(device, swapChain, renderPass, quadDescriptorSetLayout,
-		quadGraphicsShaderMap, additionalParams);
-}
-
-// Function to create Index Buffer
-void Application::createQuadIndexBuffer() {
-
-	VkDeviceSize bufferSize = sizeof(int) * QuadIndices.size();
-	
-	quadIndexBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	quadIndexBuffer->SetDataUsingStageBuffer(device, QuadIndices.data(), bufferSize, commandPool);
-}
-
-// Function to create Vertex Buffer
-void Application::createQuadVertexBuffer() {
-
-	VkDeviceSize bufferSize = sizeof(Vertex) * QuadVertices.size();
-
-	quadVertexBuffer = new Buffer(device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	quadVertexBuffer->SetDataUsingStageBuffer(device, QuadVertices.data(), bufferSize, commandPool);
 }

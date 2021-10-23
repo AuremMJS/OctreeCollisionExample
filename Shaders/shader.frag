@@ -38,6 +38,8 @@ void main() {
 
 	if(useOpacityMap > 0.5f)
 		outColor = vec4(0,0,0,opacity);
+	else if(useNormalMap > 0.5f)
+		outColor = vec4(1,0,0,1);
 	else
 		outColor = vec4(1,1,1,1);
 }

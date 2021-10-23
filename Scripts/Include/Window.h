@@ -67,6 +67,8 @@ public:
 	glm::mat4 GetRotationMatrix();
 	Matrix4 GetLightRotationMatrix();
 	glm::mat4 GetModelMatrix(float scaleValue);
+	glm::vec3 GetTranslateValues();
+	bool ShouldUpdate();
 };
 
 #endif
